@@ -1,0 +1,61 @@
+.port {
+  display: flex;
+  height: 100%;
+}
+.port_display {
+  display: flex;
+  flex-direction: column;
+  width: 25rem;
+  text-align: center;
+  cursor: pointer;
+}
+.fromto {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  margin: 1rem 0;
+  margin-bottom: 2rem;
+}
+.target {
+  width: 100%;
+}
+.option {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+.option_info {
+  margin-left: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.country {
+  margin-left: auto;
+  margin-top: auto;
+}
+.dotarrowright {
+  transition: ease-in-out 0.5s;
+}
+.red {
+  color: rgb(255, 94, 94);
+}
+.submit {
+  width: 30rem;
+}
+.slider {
+  width: 15rem;
+}
+.search {
+  margin-bottom: 0.5rem;
+}
+.row {
+  width: 100%;
+}
+.col {
+  width: 5rem;
+}
+.rate {
+}
+.close {
+  margin-left: auto;
+}
