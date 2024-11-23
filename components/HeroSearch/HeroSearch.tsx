@@ -3,14 +3,7 @@
 import '@mantine/dates/styles.css';
 
 import { createRef, useEffect, useState } from 'react';
-import {
-  Airplane,
-  DotArrowRight,
-  HorizDistributionLeft,
-  MapPin,
-  User,
-  WhiteFlag,
-} from 'iconoir-react';
+import { Airplane, DotArrowRight, MapPin, TowerCheck, User, WhiteFlag } from 'iconoir-react';
 import {
   Anchor,
   Button,
@@ -19,19 +12,19 @@ import {
   Combobox,
   ComboboxStore,
   Flex,
-  Grid,
   Input,
   Rating,
-  Slider,
   Stack,
   Text,
   Title,
   useCombobox,
 } from '@mantine/core';
-import { DatePicker } from '@mantine/dates';
+import { DateInput } from '@mantine/dates';
 import classes from './HeroSearch.module.css';
 
 import './HeroSearch.css';
+
+import { IconPlus } from '@tabler/icons-react';
 
 type Port = {
   name: string;
@@ -39,6 +32,20 @@ type Port = {
   country: string;
   code: string;
 };
+
+type Travel = {
+  from: Port;
+  to: Port;
+  date: Date;
+};
+
+type PassangersData = {
+  adults: number;
+  children: number;
+  infants: number;
+};
+
+const PASSANGER_LIMIT = 9;
 
 export function Port({
   name,
@@ -77,41 +84,60 @@ export function max(a: number, b: number): number {
   return a > b ? a : b;
 }
 
-export function PortPickers({
-  fromCombox,
-  fromPort,
-  setFromPort,
-  toCombox,
-  toPort,
-  setToPort,
-  search,
-  setSearch,
-  portsToShow,
+export function PortDisplay({ name, country, city, invalid }: Port & { invalid: boolean }) {
+  return (
+    <div className={classes.port_display}>
+      <Anchor
+        style={{
+          color: invalid ? 'var(--mantine-color-red-6)' : undefined,
+        }}
+        underline="hover"
+        href={`https://www.google.com/maps/search/${name} ${country}`}
+        target="_blank"
+      >
+        <Title order={3}>{city}</Title>
+      </Anchor>
+      <Text c="dimmed">{country}</Text>
+    </div>
+  );
+}
+
+export function TravelPicker({
+  date,
+  from,
+  setDate,
+  setFrom,
+  setTo,
+  to,
 }: {
-  fromCombox: ComboboxStore;
-  toCombox: ComboboxStore;
-  fromPort: Port;
-  setFromPort: (port: Port) => void;
-  toPort: Port;
-  setToPort: (port: Port) => void;
-  search: string;
-  setSearch: (search: string) => void;
-  portsToShow: Port[];
+  from: Port;
+  setFrom: (from: Port) => void;
+  to: Port;
+  setTo: (to: Port) => void;
+  date: Date;
+  setDate: (date: Date) => void;
 }) {
-  const transitionArrow = createRef<SVGSVGElement>();
-  useEffect(() => {
-    if (fromPort.code !== toPort.code) {
-      transitionArrow.current?.classList.remove(classes.red);
-      return;
-    }
-    transitionArrow.current?.classList.add(classes.red);
-  }, [fromPort, toPort]);
-  const closeDropdown = (combox: ComboboxStore) => {
-    return () => {
-      combox.toggleDropdown();
-    };
+  const [search, setSearch] = useState('');
+  const combox = useCombobox({});
+  const [mode, setMode] = useState<'from' | 'to'>('from');
+
+  const triggerDropDown = (mode: 'from' | 'to') => () => {
+    setMode(mode);
+    combox.toggleDropdown();
   };
 
+  let portsToShow: Port[];
+  if (search.length == 0) {
+    portsToShow = ports;
+  } else {
+    portsToShow = ports.filter(
+      ({ city, name, code, country }) =>
+        city.toLowerCase().includes(search) ||
+        name.toLowerCase().includes(search) ||
+        code.toLowerCase().includes(search) ||
+        country.toLowerCase().includes(search)
+    );
+  }
   const PortOptions = () => {
     return portsToShow.map(({ name, code, city, country }) => (
       <Combobox.Option
@@ -131,108 +157,119 @@ export function PortPickers({
     ));
   };
   return (
-    <div className={classes.fromto}>
-      <Center className={classes.port}>
-        <div>
-          <Port triggerDropDown={closeDropdown(fromCombox)} {...fromPort} />
-          <Combobox
-            store={fromCombox}
-            onOptionSubmit={(key) => {
-              setSearch('');
-              setFromPort(findPort(key)!);
-              fromCombox.toggleDropdown();
-            }}
+    <>
+      <Flex direction="column">
+        <Flex>
+          <Button
+            onClick={triggerDropDown('from')}
+            variant="default"
+            className={classes.portbutton}
           >
-            <Combobox.Target>
-              <div className={classes.target}></div>
-            </Combobox.Target>
-            <Combobox.Dropdown>
-              <Input
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.currentTarget.value.toLowerCase());
-                }}
-                className={classes.search}
-                placeholder="Search for a port"
-                rightSectionPointerEvents="all"
-                rightSection={
-                  <CloseButton
-                    aria-label="Clear input"
-                    onClick={() => setSearch('')}
-                    style={{ display: search ? undefined : 'none' }}
-                  />
-                }
-              />
-              <Combobox.Options>{<PortOptions />}</Combobox.Options>
-            </Combobox.Dropdown>
-          </Combobox>
-        </div>
-      </Center>
-      <>
-        <WhiteFlag width={'4rem'} height={'4rem'} />
-        <DotArrowRight
-          className={classes.dotarrowright}
-          ref={transitionArrow}
-          width={'4rem'}
-          height={'4rem'}
-        />
-        <MapPin width={'4rem'} height={'4rem'} />
-      </>
-      <Center className={classes.port}>
-        <div>
-          <Port triggerDropDown={closeDropdown(toCombox)} {...toPort} />
-          <Combobox
-            store={toCombox}
-            onOptionSubmit={(key) => {
-              setSearch('');
-              setToPort(findPort(key)!);
-              toCombox.toggleDropdown();
+            From
+            <PortDisplay invalid={from.code == to.code} {...from} />
+          </Button>
+          <Button onClick={triggerDropDown('to')} variant="default" className={classes.portbutton}>
+            To
+            <PortDisplay invalid={from.code == to.code} {...{ triggerDropDown }} {...to} />
+          </Button>
+        </Flex>
+        <DateInput minDate={new Date()} />
+      </Flex>
+      <Combobox
+        store={combox}
+        onOptionSubmit={(key) => {
+          setSearch('');
+          if (mode === 'from') {
+            setFrom(findPort(key)!);
+          } else {
+            setTo(findPort(key)!);
+          }
+          combox.toggleDropdown();
+        }}
+      >
+        <Combobox.Target>
+          <div className={classes.target}></div>
+        </Combobox.Target>
+        <Combobox.Dropdown>
+          <Input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.currentTarget.value.toLowerCase());
             }}
-          >
-            <Combobox.Target>
-              <div className={classes.target}></div>
-            </Combobox.Target>
-            <Combobox.Dropdown>
-              <Input
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.currentTarget.value.toLowerCase());
-                }}
-                className={classes.search}
-                placeholder="Search for a port"
-                rightSection={
-                  <CloseButton
-                    aria-label="Clear input"
-                    onClick={() => setSearch('')}
-                    style={{ display: search ? undefined : 'none' }}
-                  />
-                }
+            className={classes.search}
+            placeholder="Search for a port"
+            rightSection={
+              <CloseButton
+                aria-label="Clear input"
+                onClick={() => setSearch('')}
+                style={{ display: search ? undefined : 'none' }}
               />
-              <Combobox.Options>{<PortOptions />}</Combobox.Options>
-            </Combobox.Dropdown>
-          </Combobox>
-        </div>
-      </Center>
-    </div>
+            }
+          />
+          <Combobox.Options>{<PortOptions />}</Combobox.Options>
+        </Combobox.Dropdown>
+      </Combobox>
+    </>
   );
 }
 
-type PassangersData = {
-  adults: number;
-  children: number;
-  infants: number;
-};
+export function TravelSeperator({ invalid }: { invalid: boolean }) {
+  const arrow = createRef<SVGSVGElement>();
+  useEffect(() => {
+    if (invalid) {
+      arrow.current?.classList.remove(classes.red);
+      return;
+    }
+    arrow.current?.classList.add(classes.red);
+  }, [invalid]);
+  return <DotArrowRight className={classes.dotarrowright} ref={arrow} width="4rem" height="4rem" />;
+}
 
-const PASSANGER_LIMIT = 9;
+export function TravelPickers({
+  travels,
+  setTravels,
+}: {
+  travels: Travel[];
+  setTravels: (travels: Travel[]) => void;
+}) {
+  const [froms, setFroms] = useState<Port[]>(travels.map(({ from }) => from));
+  const [tos, setTos] = useState<Port[]>(travels.map(({ to }) => to));
+  const [dates, setDates] = useState<Date[]>(travels.map(({ date }) => date));
+  function combine(): Travel[] {
+    const output = [];
+    for (let i = 0; i < froms.length; i++) {
+      output.push({ from: froms[i], to: tos[i], date: dates[i] });
+    }
+    return output;
+  }
+  function setAtIndex<T>(setArr: (array: T[]) => void, array: T[], value: T, index: number) {
+    setArr(array.map((x, j) => (j == index ? value : x)));
+  }
+  useEffect(() => {
+    setTravels(combine());
+  }, [froms, tos, dates]);
+  return combine().map(({ from, to, date }, i) => (
+    <>
+      <TravelPicker
+        key={i}
+        date={date}
+        setDate={(date) => setAtIndex(setDates, dates, date, i)}
+        from={from}
+        setFrom={(from) => setAtIndex(setFroms, froms, from, i)}
+        to={to}
+        setTo={(to) => setAtIndex(setTos, tos, to, i)}
+      />
+      {i < froms.length - 1 && <TravelSeperator invalid={from.code === to.code} />}
+    </>
+  ));
+}
 
 export function PassangersSelect({
-  numOfPassangers,
   setNumOfPassangers,
 }: {
-  numOfPassangers: PassangersData;
   setNumOfPassangers: (numOfPassangers: PassangersData) => void;
 }) {
-  const [adults, setAdults] = useState(0);
+  const [adults, setAdults] = useState(1);
   const [infants, setInfants] = useState(0);
   const [children, setChildren] = useState(0);
 
@@ -268,8 +305,8 @@ export function PassangersSelect({
           <CloseButton
             className={classes.close}
             aria-label="Clear input"
-            onClick={() => setAdults(0)}
-            style={{ opacity: adults > 0 ? 100 : 0 }}
+            onClick={() => setAdults(1)}
+            style={{ opacity: adults > 1 ? 100 : 0 }}
           />
         </Flex>
         <Flex justify="space-between" className={classes.row} gap="lg">
@@ -328,56 +365,44 @@ export function PassangersSelect({
 }
 
 export function HeroSearch() {
-  const [fromPort, setFromPort] = useState<Port>(ports[0]);
-  const [toPort, setToPort] = useState<Port>(ports[1]);
-  const [date, setDate] = useState<Date>(new Date());
-  const [search, setSearch] = useState<string>('');
+  const [travels, setTravels] = useState<Travel[]>([
+    {
+      from: ports[0],
+      to: ports[1],
+      date: new Date(),
+    },
+  ]);
   const [numOfPassangers, setNumOfPassangers] = useState<PassangersData>({
     adults: 1,
     children: 0,
     infants: 0,
   });
-  const fromCombox = useCombobox({});
-  const toCombox = useCombobox({});
 
-  let portsToShow: Port[];
-  if (search.length == 0) {
-    portsToShow = ports;
-  } else {
-    portsToShow = ports.filter(
-      ({ city, name, code, country }) =>
-        city.toLowerCase().includes(search) ||
-        name.toLowerCase().includes(search) ||
-        code.toLowerCase().includes(search) ||
-        country.toLowerCase().includes(search)
-    );
+  function areValidPorts() {
+    return travels.every(({ from, to }) => from.code !== to.code);
   }
+
   return (
     <>
-      <PortPickers
-        {...{
-          fromCombox,
-          fromPort,
-          setFromPort,
-          toCombox,
-          toPort,
-          setToPort,
-          search,
-          setSearch,
-          portsToShow,
-        }}
-      />
+      <Flex gap="lg">
+        <TravelPickers {...{ travels, setTravels }} />
+        <Button
+          leftSection={<IconPlus />}
+          variant="outline"
+          style={{
+            marginTop: 'auto',
+            marginBottom: 'auto',
+            height: '5vw',
+          }}
+        >
+          Add City
+        </Button>
+      </Flex>
       <Stack align="center" gap="lg">
-        <DatePicker
-          onDateChange={(date) => setDate(date)}
-          minDate={new Date()}
-          defaultValue={new Date()}
-          size="lg"
-        />
-        <PassangersSelect {...{ numOfPassangers, setNumOfPassangers }} />
+        <PassangersSelect {...{ setNumOfPassangers }} />
         <Button
           className={classes.submit}
-          disabled={fromPort.code === toPort.code}
+          disabled={!areValidPorts()}
           size="lg"
           variant="filled"
           radius="xl"

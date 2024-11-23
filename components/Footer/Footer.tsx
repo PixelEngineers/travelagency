@@ -7,7 +7,7 @@ export function Footer() {
   return (
     <div className={classes.footer}>
       <Container className={classes.inner}>
-        <Logo width="3rem" height="3rem" />
+        <Logo width="3vw" height="3vw" />
         <Group gap={0} className={classes.links} justify="flex-end" wrap="nowrap">
           <ActionIcon size="lg" color="gray" variant="subtle">
             <IconBrandTwitter style={{ width: rem(18), height: rem(18) }} stroke={1.5} />

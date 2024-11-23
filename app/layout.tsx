@@ -1,5 +1,6 @@
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
+import '@/styles/Layout.css';
 
 import React from 'react';
 import { IconoirProvider } from 'iconoir-react';

@@ -1,6 +1,9 @@
+'use client';
+
 import { useState } from 'react';
 import { Airplane as Logo } from 'iconoir-react';
 import { Button, Center, Container, Group, SegmentedControl } from '@mantine/core';
+import { ToggleTheme } from '../ToggleTheme/ToggleTheme';
 import classes from './Header.module.css';
 
 type Link = {
@@ -17,11 +20,7 @@ const links: Link[] = [
 
 export function mapForSegmentedControl(items: Link[]) {
   return items.map(({ label, link }) => ({
-    label: (
-      <Center key={label} className={classes.link}>
-        {label}
-      </Center>
-    ),
+    label: <Center key={label}>{label}</Center>,
     value: link,
   }));
 }
@@ -31,14 +30,15 @@ export function Header() {
 
   return (
     <header className={classes.header}>
-      <Container size="md" className={classes.inner}>
-        <Logo width="3rem" height="3rem" />
+      <Container fluid size="md" className={classes.inner}>
+        <Logo width="3vw" height="3vw" />
         <SegmentedControl
           value={active}
           onChange={setActive}
           data={mapForSegmentedControl(links)}
         />
         <Group>
+          <ToggleTheme />
           <Button variant="default">Log in</Button>
           <Button
             variant="gradient"
